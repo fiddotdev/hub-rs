@@ -1,3 +1,5 @@
+## ⚠️🚧 hub-rs is currently in active development and should NOT be assumed production-ready 🚧⚠️
+
 # hub-rs
 
 hub-rs is a barebones Rust library for interacting with [Farcaster](https://farcaster.xyz) hubs
