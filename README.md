@@ -9,7 +9,7 @@ Protobufs are provided from the [Farcaster monorepo](https://github.com/farcaste
 ## How to use
 First, install the crate:
 
-`hub-rs = { version = "0.01" }`  OR `cargo add hub-rs`
+`hub-rs = { version = "0.1.0" }`  OR `cargo add hub-rs`
 
 Then, you can use it in your project. To create a client, and get info about the connected hub, you might write something like this:
 ```rust
