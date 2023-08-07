@@ -1,0 +1,15 @@
+[package]
+name = "hub-replicator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hub-rs = { path = "../.." }
+sqlx = { version = "0.7.1", features = [ "runtime-tokio", "tls-native-tls", "postgres", "bigdecimal", "chrono" ] }
+envy = { version = "0.4.2" }
+serde = { version = "1.0.178" }
+serde_json = { version = "1.0.104" }
+tokio = { version = "1.29.1", features = ["full"]}
+tonic = { version = "0.9.2", features = ["transport","tls","tls-roots","tls-webpki-roots"]}
+chrono = { version = "0.4.26" }
+dotenv = { version = "0.15.0" }
