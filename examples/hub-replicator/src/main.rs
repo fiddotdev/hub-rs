@@ -4,7 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 use tokio::sync::Semaphore;
 use hub_rs::hub_service_client::HubServiceClient;
 use tonic::transport::Channel;
-use hub_rs::FidsRequest;
+use hub_rs::{FidRequest, FidsRequest};
 use tokio::time::{Duration, Instant, sleep};
 pub mod types;
 
@@ -33,19 +33,42 @@ async fn backfill(mut hub_client: HubServiceClient<Channel>) -> Result<(), Box<d
     let max_fid_result = hub_client.get_fids(FidsRequest { page_size: Some(1), page_token: None, reverse: Some(true) }).await?;
     let max_fid = max_fid_result.into_inner().fids[0];
     let total_processed = Arc::new(tokio::sync::Mutex::new(0));
+    let total_success = Arc::new(tokio::sync::Mutex::new(0));
+    let total_error = Arc::new(tokio::sync::Mutex::new(0));
     let start_time = Instant::now();
 
-    let semaphore = Arc::new(Semaphore::new(5));
-
+    let sem = Arc::new(Semaphore::new(3));
     let mut handles = Vec::new();
 
     for fid in 1..=max_fid {
-        let permit = semaphore.clone().acquire_owned().await.unwrap();
+        let sem = Arc::clone(&sem);
         let total_processed = total_processed.clone();
-        let handle = tokio::spawn(async move {
-            // process all messages for the current fid
-            // process_all_messages_for_fid(fid).await;
+        let total_success = total_success.clone();
+        let total_error = total_error.clone();
 
+        let mut hub_client = hub_client.clone();
+        let handle = tokio::spawn(async move {
+            let _permit = sem.acquire().await;
+
+            // process all messages for the current fid
+            let last_cast = hub_client.get_casts_by_fid(FidRequest {
+                fid,
+                page_size: Some(1),
+                page_token: None,
+                reverse: Some(true),
+            }).await;
+
+            let mut total_success = total_success.lock().await;
+            let mut total_error = total_error.lock().await;
+
+            match last_cast {
+                Ok(_) => *total_success += 1,
+                Err(err) => {
+                    *total_error += 1;
+                    println!("{:?}", fid);
+                    println!("{:#?}", err);
+                }
+            }
             let mut total_processed = total_processed.lock().await;
             *total_processed += 1;
 
@@ -54,18 +77,16 @@ async fn backfill(mut hub_client: HubServiceClient<Channel>) -> Result<(), Box<d
             let remaining_duration = Duration::from_millis(millis_remaining as u64);
 
             println!("[Backfill] Completed FID {}/{}. Estimated time remaining: {:?}", fid, max_fid, remaining_duration);
-
-            sleep(Duration::from_secs(20)).await;
         });
         handles.push(handle);
     }
 
-    // wait for all tasks to complete
     for handle in handles {
         handle.await?;
     }
 
     println!("[Backfill] Completed in {:?}", start_time.elapsed());
-
+    println!("[Backfill] Total # Error'd: {:?}", total_error);
     Ok(())
 }
+
