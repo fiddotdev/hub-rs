@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 hub-rs = { path = "../../" }
 tokio = { version = "1.29.1", features = ["full"] }
+ed25519-dalek = { version = "2.0.0", features = ["rand_core"] }
+rand = { version = "0.8.5" }

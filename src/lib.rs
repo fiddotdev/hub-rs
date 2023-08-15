@@ -1,11 +1,12 @@
-use hex::FromHexError;
-use chrono::{Utc, TimeZone, LocalResult, DateTime, Duration};
+use chrono::{Duration, LocalResult, TimeZone, Utc};
 pub use client_definitions::*;
+use hex::FromHexError;
 
 pub mod client_definitions {
     tonic::include_proto!("_");
 }
 
+pub mod builders;
 
 /// Converts a sequence of bytes into its hexadecimal string representation.
 ///
@@ -69,13 +70,14 @@ pub fn hex_string_to_bytes(string: String) -> Result<Vec<u8>, FromHexError> {
 /// ```
 pub fn get_farcaster_time() -> Option<i64> {
     match Utc.with_ymd_and_hms(2021, 1, 1, 0, 0, 0) {
-        LocalResult::Single(farcaster_epoch) => {
-            Some(Utc::now().signed_duration_since(farcaster_epoch).num_seconds())
-        }
+        LocalResult::Single(farcaster_epoch) => Some(
+            Utc::now()
+                .signed_duration_since(farcaster_epoch)
+                .num_seconds(),
+        ),
         _ => None,
     }
 }
-
 
 /// Converts from a Unix timestamp to a Farcaster timestamp.
 ///
@@ -95,13 +97,15 @@ pub fn to_farcaster_time(time: i64) -> Option<i64> {
             let unix_timestamp = Utc.timestamp_opt(time / 1000, ((time % 1000) as u32) * 1_000_000);
 
             match unix_timestamp {
-                LocalResult::Single(unix_timestamp) => {
-                    Some(unix_timestamp.signed_duration_since(farcaster_epoch).num_seconds())
-                },
-                _ => None
+                LocalResult::Single(unix_timestamp) => Some(
+                    unix_timestamp
+                        .signed_duration_since(farcaster_epoch)
+                        .num_seconds(),
+                ),
+                _ => None,
             }
-        },
-        _ => None
+        }
+        _ => None,
     }
 }
 
@@ -121,9 +125,12 @@ pub fn from_farcaster_time(time: i64) -> Option<i64> {
     match farcaster_epoch {
         LocalResult::Single(farcaster_epoch) => {
             let farcaster_timestamp = farcaster_epoch + Duration::seconds(time);
-            Some(farcaster_timestamp.timestamp() * 1000 + (farcaster_timestamp.timestamp_subsec_millis() as i64))
-        },
-        _ => None
+            Some(
+                farcaster_timestamp.timestamp() * 1000
+                    + (farcaster_timestamp.timestamp_subsec_millis() as i64),
+            )
+        }
+        _ => None,
     }
 }
 #[cfg(test)]
@@ -132,7 +139,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_info() -> Result<(), Box<dyn std::error::Error>> {
-        let mut client = hub_service_client::HubServiceClient::connect("https://mainnet.useportals.app:2283").await?;
+        let mut client =
+            hub_service_client::HubServiceClient::connect("https://mainnet.useportals.app:2283")
+                .await?;
 
         let response = client.get_info(HubInfoRequest { db_stats: true }).await;
 
@@ -152,8 +161,14 @@ mod tests {
         println!("{}", from_unix_time.unwrap());
 
         assert!(time.is_some(), "Failed to get farcaster time");
-        assert!(to_unix_time.is_some(), "Failed to convert the current time into a unix time");
-        assert!(from_unix_time.is_some(), "Failed to convert the Unix time into a Farcaster time");
+        assert!(
+            to_unix_time.is_some(),
+            "Failed to convert the current time into a unix time"
+        );
+        assert!(
+            from_unix_time.is_some(),
+            "Failed to convert the Unix time into a Farcaster time"
+        );
         Ok(())
     }
 }

@@ -9,6 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     tonic_build::configure()
         .build_server(false)
         .type_attribute(".", "#[derive(serde::Deserialize, serde::Serialize)]")
+        .protoc_arg("--experimental_allow_proto3_optional")
         .compile(&proto_files, &["src/protobufs/schemas"])?;
 
     Ok(())
