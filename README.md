@@ -31,6 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+## Write Operations
+Currently, writing to Hubs is not supported here. I have a messy start on the [landon-write-operations](https://github.com/withportals/hub-rs/tree/landon-write-operations) branch if you'd like to take a look / build on it. (Under src/builders/make_cast_add.rs)
 
 ## Additional Functions Provided
 Currently, two extra functions are provided for QOL:
