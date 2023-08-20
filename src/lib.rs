@@ -1,5 +1,5 @@
 use hex::FromHexError;
-use chrono::{Utc, TimeZone, LocalResult, DateTime, Duration};
+use chrono::{Utc, TimeZone, LocalResult, Duration};
 pub use client_definitions::*;
 
 pub mod client_definitions {
